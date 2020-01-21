@@ -64,33 +64,38 @@ def detect_face(image_path):
 @bot.message_handler(content_types=['photo'])
 def get_photo(message):
     chat_id = message.from_user.id
-    file_id = message.photo[2].file_id
-    file_info = bot.get_file(file_id)
-    download_url = 'https://api.telegram.org/file/bot{0}/{1}'.format(
-        API_TOKEN, file_info.file_path)
+    try:
+        file_id = message.photo[-1].file_id
+        file_info = bot.get_file(file_id)
+        download_url = 'https://api.telegram.org/file/bot{0}/{1}'.format(
+            API_TOKEN, file_info.file_path)
 
-    # Download photo
-    uid_path = os.path.join(DOWNLOADS_PATH, "uid_"+str(chat_id))
-    if not os.path.isdir(uid_path):
-        os.makedirs(uid_path)
-    file_path = os.path.join(uid_path, 'photo.png')
-    urllib.request.urlretrieve(download_url, file_path)
+        # Download photo
+        uid_path = os.path.join(DOWNLOADS_PATH, "uid_"+str(chat_id))
+        if not os.path.isdir(uid_path):
+            os.makedirs(uid_path)
+        file_path = os.path.join(uid_path, 'photo.png')
+        urllib.request.urlretrieve(download_url, file_path)
 
-    # Face detection
-    if detect_face(file_path):
-        photos = [filename for filename in os.listdir(
-            uid_path) if filename.endswith('.png')]
-        next_id = len(photos)
-        output_path = os.path.join(
-            uid_path, 'photo_{}.png'.format(next_id))
-        urllib.request.urlretrieve(download_url, output_path)
-        photo = open(output_path, 'rb')
-        bot.send_photo(chat_id, photo)
+        # Face detection
+
+        if detect_face(file_path):
+            photos = [filename for filename in os.listdir(
+                uid_path) if filename.endswith('.png')]
+            next_id = len(photos)
+            output_path = os.path.join(
+                uid_path, 'photo_{}.png'.format(next_id))
+            urllib.request.urlretrieve(download_url, output_path)
+            photo = open(output_path, 'rb')
+            bot.send_photo(chat_id, photo)
+            bot.send_message(message.from_user.id,
+                             "Красивое лицо, сохраним")
+        else:
+            bot.send_message(message.from_user.id,
+                             "Тут нет лица")
+    except:
         bot.send_message(message.from_user.id,
-                         "Красивое лицо, сохраним")
-    else:
-        bot.send_message(message.from_user.id,
-                         "Тут нет лица")
+                         "Попробуй другое фото")
 
 
 bot.polling(none_stop=True, interval=0)
