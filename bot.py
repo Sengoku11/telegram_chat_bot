@@ -37,7 +37,8 @@ def get_voice_message(message):
     # Covert voice to audio
     output_path = os.path.join(
         uid_path, 'audio_message_{}.wav'.format(next_id))
-    process = subprocess.run(['ffmpeg', '-i', voice_path, output_path])
+    process = subprocess.run(
+        ['ffmpeg', '-i', voice_path, "-acodec", "pcm_s16le", "-ar", "16000", output_path])
     if process.returncode != 0:
         bot.send_message(message.from_user.id,
                          "Хуйня какая-то")
